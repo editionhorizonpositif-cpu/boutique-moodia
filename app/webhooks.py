@@ -37,7 +37,7 @@ async def paypal_webhook(request: Request, db: AsyncSession = Depends(get_db)):
         resource = event_body.get("resource", {})
         paypal_order_id = resource.get("id")
         payer_email = resource.get("payer", {}).get("email_address")
-        logger.info(f"DEBUG: payer_email = {payer_email}")
+        logger.info(f"DEBUG: payer_email depuis PayPal = {payer_email}")
 
         # Charger la commande AVEC les items et produits
         stmt = select(Order).where(Order.paypal_order_id == paypal_order_id).options(
@@ -53,20 +53,24 @@ async def paypal_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             order.customer_email = payer_email
             await db.commit()
 
+            # --- Test : envoyer à une adresse fixe ---
+            test_email = "fouajionidelle2000@gmail.com"
+            logger.info(f"Envoi de test à {test_email} (payer_email était {payer_email})")
+
             for item in order.items:
                 product = item.product
                 logger.info(f"Produit: {product.title if product else 'None'}, content_file_id: {product.content_file_id if product else 'None'}")
                 if product and product.content_file_id:
                     token = generate_download_token(product.id)
                     download_url = f"https://api-boutique.moodia.xyz/download/ebook?token={token}"
-                    logger.info(f"Envoi email à {payer_email} pour {product.title}")
+                    logger.info(f"Envoi email à {test_email} pour {product.title}")
                     await send_download_email(
-                        to_email=payer_email,
+                        to_email=test_email,
                         download_url=download_url,
                         product_title=product.title
                     )
                 else:
-                    logger.warning(f"Produit {product.id} sans fichier, pas d'envoi d'email.")
+                    logger.warning(f"Produit {product.id if product else '?'} sans fichier, pas d'envoi.")
         else:
             logger.warning(f"Commande introuvable ou statut non PENDING : {order.status if order else 'None'}")
 
