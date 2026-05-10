@@ -1,9 +1,8 @@
 # app/email.py
 import os
-import asyncio
+import logging
 import aiosmtplib
 from email.mime.text import MIMEText
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +17,10 @@ async def send_download_email(to_email: str, download_url: str, product_title: s
         logger.warning("SMTP non configuré, email non envoyé.")
         return
 
+    if not to_email:
+        logger.warning("Adresse destinataire vide, email non envoyé.")
+        return
+
     message = MIMEText(
         f"Merci pour votre achat !\n\n"
         f"Voici votre lien de téléchargement pour '{product_title}' (valable 10 minutes) :\n"
@@ -28,6 +31,7 @@ async def send_download_email(to_email: str, download_url: str, product_title: s
     message["Subject"] = f"Votre ebook : {product_title}"
 
     try:
+        logger.info(f"Tentative d'envoi à {to_email} via {SMTP_HOST}:{SMTP_PORT}")
         await aiosmtplib.send(
             message,
             hostname=SMTP_HOST,
