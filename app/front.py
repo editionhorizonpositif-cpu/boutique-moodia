@@ -1,4 +1,5 @@
 # app/front.py
+from sqlalchemy.orm import selectinload
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 from jinja2 import Environment, FileSystemLoader
@@ -30,14 +31,24 @@ async def shop(request: Request, db: AsyncSession = Depends(get_db)):
 # ---------- Ajouter au panier ----------
 @router.get("/cart/add/{product_id}")
 async def add_to_cart(product_id: int, cart: Cart = Depends(get_cart), db: AsyncSession = Depends(get_db)):
+    # Vérifier que le produit existe
     product = await db.get(Product, product_id)
     if not product:
         raise HTTPException(404, "Produit introuvable")
-    for item in cart.items:
-        if item.product_id == product_id:
-            item.quantity += 1
-            await db.commit()
-            return RedirectResponse("/cart", status_code=303)
+
+    # Chercher un CartItem existant pour ce produit dans ce panier
+    stmt = select(CartItem).where(
+        CartItem.cart_id == cart.id,
+        CartItem.product_id == product_id
+    )
+    result = await db.execute(stmt)
+    existing = result.scalars().first()
+
+    if existing:
+        existing.quantity += 1
+        await db.commit()
+        return RedirectResponse("/cart", status_code=303)
+
     new_item = CartItem(cart_id=cart.id, product_id=product_id, quantity=1)
     db.add(new_item)
     await db.commit()
@@ -46,23 +57,28 @@ async def add_to_cart(product_id: int, cart: Cart = Depends(get_cart), db: Async
 # ---------- Supprimer du panier ----------
 @router.get("/cart/remove/{product_id}")
 async def remove_from_cart(product_id: int, cart: Cart = Depends(get_cart), db: AsyncSession = Depends(get_db)):
-    for item in cart.items:
-        if item.product_id == product_id:
-            await db.delete(item)
-            await db.commit()
-            break
+    stmt = select(CartItem).where(
+        CartItem.cart_id == cart.id,
+        CartItem.product_id == product_id
+    )
+    result = await db.execute(stmt)
+    item = result.scalars().first()
+    if item:
+        await db.delete(item)
+        await db.commit()
     return RedirectResponse("/cart", status_code=303)
 
 # ---------- Voir le panier ----------
 @router.get("/cart")
 async def view_cart(request: Request, cart: Cart = Depends(get_cart), db: AsyncSession = Depends(get_db)):
-    cart_items = []
-    total = 0
-    for item in cart.items:
-        product = await db.get(Product, item.product_id)
-        if product:
-            cart_items.append({"product": product, "quantity": item.quantity})
-            total += product.price * item.quantity
+    # Charger les items avec les produits associés
+    stmt = select(CartItem).where(CartItem.cart_id == cart.id).options(selectinload(CartItem.product))
+    result = await db.execute(stmt)
+    items = result.scalars().all()
+
+    total = sum(item.product.price * item.quantity for item in items if item.product)
+    cart_items = [{"product": item.product, "quantity": item.quantity} for item in items if item.product]
+
     return render_template("cart.html", {
         "request": request,
         "cart_items": cart_items,
