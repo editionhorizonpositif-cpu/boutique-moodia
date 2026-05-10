@@ -27,7 +27,7 @@ async def get_cart(request: Request, response: Response, db: AsyncSession = Depe
             COOKIE_NAME,
             session_id,
             httponly=True,
-            secure=False,   # True en production
+            secure=True,   # True en production
             samesite="lax",
             max_age=3600*24*30
         )
