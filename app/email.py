@@ -30,15 +30,27 @@ async def send_download_email(to_email: str, download_url: str, product_title: s
     message["To"] = to_email
     message["Subject"] = f"Votre ebook : {product_title}"
 
+    # Choisir la méthode de chiffrement selon le port
+    if SMTP_PORT == 465:
+        # SSL direct
+        tls = True
+        start_tls = False
+    else:
+        # STARTTLS sur port 587
+        tls = False
+        start_tls = True
+
     try:
-        logger.info(f"Tentative d'envoi à {to_email} via {SMTP_HOST}:{SMTP_PORT}")
+        logger.info(f"Tentative d'envoi à {to_email} via {SMTP_HOST}:{SMTP_PORT} (TLS={tls}, STARTTLS={start_tls})")
         await aiosmtplib.send(
             message,
             hostname=SMTP_HOST,
             port=SMTP_PORT,
-            start_tls=True,
+            use_tls=tls,
+            start_tls=start_tls,
             username=SMTP_USERNAME,
             password=SMTP_PASSWORD,
+            timeout=30                   # augmenter le timeout
         )
         logger.info(f"Email envoyé à {to_email}")
     except Exception as e:
