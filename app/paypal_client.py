@@ -2,7 +2,7 @@
 import asyncio
 from paypalcheckoutsdk.core import PayPalHttpClient, SandboxEnvironment, LiveEnvironment
 from paypalcheckoutsdk.orders import OrdersCreateRequest, OrdersCaptureRequest
-from .config import PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_MODE
+from .config import PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_MODE, RETURN_URL, CANCEL_URL
 
 if PAYPAL_MODE == "sandbox":
     environment = SandboxEnvironment(client_id=PAYPAL_CLIENT_ID, client_secret=PAYPAL_CLIENT_SECRET)
@@ -23,11 +23,10 @@ async def create_paypal_order(order_total: float, currency: str = "EUR"):
             }
         }],
         "application_context": {
-            "return_url": "http://127.0.0.1:8000/payment-success",
-            "cancel_url": "http://127.0.0.1:8000/payment-cancel"
+            "return_url": RETURN_URL,
+            "cancel_url": CANCEL_URL
         }
     })
-    # Le SDK n'est pas asynchrone, on l'exécute dans un thread séparé
     response = await asyncio.to_thread(client.execute, request)
     return response.result
 
