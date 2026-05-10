@@ -10,7 +10,7 @@ from .cart import get_cart
 from .paypal_client import create_paypal_order
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory="app/templates", auto_reload=False)
 
 # ---------- Page boutique ----------
 @router.get("/shop")
