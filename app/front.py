@@ -1,23 +1,31 @@
 # app/front.py
 from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse, HTMLResponse
+from jinja2 import Environment, FileSystemLoader
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from .database import get_db
 from .models import Product, Cart, CartItem, Order, OrderItem
 from .cart import get_cart
 from .paypal_client import create_paypal_order
+import os
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
+
+# --- Initialisation manuelle de Jinja2 (évite le bug LruCache de Starlette sur Python 3.14) ---
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+jinja_env = Environment(loader=FileSystemLoader(os.path.join(BASE_DIR, "app/templates")))
+
+def render_template(name: str, context: dict) -> HTMLResponse:
+    template = jinja_env.get_template(name)
+    return HTMLResponse(template.render(context))
 
 # ---------- Page boutique ----------
 @router.get("/shop")
 async def shop(request: Request, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Product))
     products = result.scalars().all()
-    return templates.TemplateResponse("shop.html", {"request": request, "products": products})
+    return render_template("shop.html", {"request": request, "products": products})
 
 # ---------- Ajouter au panier ----------
 @router.get("/cart/add/{product_id}")
@@ -25,7 +33,6 @@ async def add_to_cart(product_id: int, cart: Cart = Depends(get_cart), db: Async
     product = await db.get(Product, product_id)
     if not product:
         raise HTTPException(404, "Produit introuvable")
-    # Cherche si déjà présent
     for item in cart.items:
         if item.product_id == product_id:
             item.quantity += 1
@@ -49,7 +56,6 @@ async def remove_from_cart(product_id: int, cart: Cart = Depends(get_cart), db: 
 # ---------- Voir le panier ----------
 @router.get("/cart")
 async def view_cart(request: Request, cart: Cart = Depends(get_cart), db: AsyncSession = Depends(get_db)):
-    # On charge les produits manuellement (puisque la relation peut être lazy)
     cart_items = []
     total = 0
     for item in cart.items:
@@ -57,7 +63,7 @@ async def view_cart(request: Request, cart: Cart = Depends(get_cart), db: AsyncS
         if product:
             cart_items.append({"product": product, "quantity": item.quantity})
             total += product.price * item.quantity
-    return templates.TemplateResponse("cart.html", {
+    return render_template("cart.html", {
         "request": request,
         "cart_items": cart_items,
         "total": total
@@ -101,7 +107,6 @@ async def checkout(cart: Cart = Depends(get_cart), db: AsyncSession = Depends(ge
     paypal_order = await create_paypal_order(total)
     order.paypal_order_id = paypal_order.id
     await db.commit()
-    # Optionnel : vider le panier
     for item in cart.items:
         await db.delete(item)
     await db.commit()
@@ -111,4 +116,4 @@ async def checkout(cart: Cart = Depends(get_cart), db: AsyncSession = Depends(ge
 # ---------- Page de succès ----------
 @router.get("/payment-success")
 async def payment_success(request: Request):
-    return templates.TemplateResponse("success.html", {"request": request})
+    return render_template("success.html", {"request": request})
