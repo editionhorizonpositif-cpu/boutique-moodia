@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Votre panier</h2>
+{% if cart_items %}
+    <ul>
+    {% for item in cart_items %}
+    <li class="cart-item">
+        {{ item.product.title }} x {{ item.quantity }} 
+        = {{ item.product.price * item.quantity }}€
+        <a href="/cart/remove/{{ item.product.id }}">Supprimer</a>
+    </li>
+    {% endfor %}
+    </ul>
+    <p>Total : {{ total }}€</p>
+    <a href="/checkout" class="btn">Commander avec PayPal</a>
+{% else %}
+    <p>Votre panier est vide.</p>
+{% endif %}
+{% endblock %}

@@ -1,7 +1,7 @@
 # app/models.py
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import declarative_base, relationship
-from datetime import datetime, timezone
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -14,8 +14,8 @@ class Product(Base):
     image_url_main = Column(String)
     image_url_2 = Column(String)
     image_url_3 = Column(String)
-    content_file_id = Column(String)     # File ID Drive (privé)
-    content_name = Column(String)        # nom du fichier, ex: "ebook.pdf"
+    content_file_id = Column(String)
+    content_name = Column(String)
     is_premium_only = Column(Boolean, default=False)
 
 class Cart(Base):
@@ -32,12 +32,13 @@ class CartItem(Base):
     product_id = Column(Integer, ForeignKey("products.id"))
     quantity = Column(Integer, default=1)
     cart = relationship("Cart", back_populates="items")
+    product = relationship("Product")   # <-- AJOUTEZ CETTE LIGNE
 
 class Order(Base):
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True)
     paypal_order_id = Column(String, unique=True)
-    status = Column(String, default="PENDING")  # PENDING, COMPLETED
+    status = Column(String, default="PENDING")
     total = Column(Float)
     customer_email = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -51,6 +52,7 @@ class OrderItem(Base):
     quantity = Column(Integer)
     price = Column(Float)
     order = relationship("Order", back_populates="items")
+    product = relationship("Product")   # <-- optionnel mais recommandé
 
 class WebhookEvent(Base):
     __tablename__ = "webhook_events"

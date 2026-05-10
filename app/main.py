@@ -8,6 +8,7 @@ from .models import Base
 from .downloads import router as downloads_router
 from .orders import router as orders_router
 from .webhooks import router as webhooks_router
+from .front import router as front_router          # <-- NOUVEAU
 
 app = FastAPI(title="Boutique Moodia")
 
@@ -21,10 +22,11 @@ app.add_middleware(
 app.include_router(downloads_router)
 app.include_router(orders_router)
 app.include_router(webhooks_router)
+app.include_router(front_router)                  # <-- NOUVEAU
 
 async def keepalive():
     while True:
-        await asyncio.sleep(240)  # 4 minutes
+        await asyncio.sleep(240)
         try:
             async with async_session() as db:
                 await db.execute(text("SELECT 1"))

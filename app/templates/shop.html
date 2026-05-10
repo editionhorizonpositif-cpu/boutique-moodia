@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Nos ebooks</h2>
+{% if products %}
+    {% for product in products %}
+    <div class="product">
+        {% if product.image_url_main %}
+        <img src="{{ product.image_url_main }}" alt="{{ product.title }}">
+        {% endif %}
+        <div>
+            <strong>{{ product.title }}</strong><br>
+            {{ product.description or '' }}<br>
+            Prix : {{ product.price }}€<br>
+            <a href="/cart/add/{{ product.id }}" class="btn">Ajouter au panier</a>
+            <a href="/buy/{{ product.id }}" class="btn">Acheter maintenant</a>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p>Aucun produit pour le moment.</p>
+{% endif %}
+{% endblock %}
