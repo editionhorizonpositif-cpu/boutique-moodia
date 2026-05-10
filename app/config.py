@@ -22,6 +22,8 @@ else:
 
 RETURN_URL = os.getenv("RETURN_URL", "http://127.0.0.1:8000/payment-success")
 CANCEL_URL = os.getenv("CANCEL_URL", "http://127.0.0.1:8000/payment-cancel") 
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
-SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")
-SENDGRID_FROM_NAME = os.getenv("SENDGRID_FROM_NAME", "Moodia Support")
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_FROM = os.getenv("SMTP_FROM")
