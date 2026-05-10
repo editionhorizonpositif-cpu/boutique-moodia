@@ -129,6 +129,18 @@ async def checkout(cart: Cart = Depends(get_cart), db: AsyncSession = Depends(ge
     approval_url = next(link.href for link in paypal_order.links if link.rel == "approve")
     return RedirectResponse(approval_url, status_code=303)
 
+# ---------- TEST JSON (à supprimer après) ----------
+@router.get("/cart-json")
+async def view_cart_json(cart: Cart = Depends(get_cart), db: AsyncSession = Depends(get_db)):
+    stmt = select(CartItem).where(CartItem.cart_id == cart.id).options(selectinload(CartItem.product))
+    result = await db.execute(stmt)
+    items = result.scalars().all()
+    return {
+        "session_id": cart.session_id,
+        "cart_id": cart.id,
+        "items": [{"product": item.product.title, "quantity": item.quantity} for item in items if item.product]
+    }
+
 # ---------- Page de succès ----------
 @router.get("/payment-success")
 async def payment_success(request: Request):
