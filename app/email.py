@@ -1,4 +1,5 @@
 # app/email.py
+import os
 import asyncio
 import aiosmtplib
 from email.mime.text import MIMEText
