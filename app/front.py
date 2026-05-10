@@ -28,7 +28,7 @@ async def shop(request: Request, db: AsyncSession = Depends(get_db)):
     products = result.scalars().all()
     return render_template("shop.html", {"request": request, "products": products})
 
-# ---------- Ajouter au panier ----------
+# ---------- Ajouter au panier (version robuste sans lazy loading) ----------
 @router.get("/cart/add/{product_id}")
 async def add_to_cart(product_id: int, cart: Cart = Depends(get_cart), db: AsyncSession = Depends(get_db)):
     # Vérifier que le produit existe
@@ -36,31 +36,25 @@ async def add_to_cart(product_id: int, cart: Cart = Depends(get_cart), db: Async
     if not product:
         raise HTTPException(404, "Produit introuvable")
 
-    # Chercher un CartItem existant pour ce produit dans ce panier
-    stmt = select(CartItem).where(
-        CartItem.cart_id == cart.id,
-        CartItem.product_id == product_id
-    )
+    # Chercher si déjà dans le panier (requête explicite)
+    stmt = select(CartItem).where(CartItem.cart_id == cart.id, CartItem.product_id == product_id)
     result = await db.execute(stmt)
     existing = result.scalars().first()
 
     if existing:
         existing.quantity += 1
         await db.commit()
-        return RedirectResponse("/cart", status_code=303)
+    else:
+        new_item = CartItem(cart_id=cart.id, product_id=product_id, quantity=1)
+        db.add(new_item)
+        await db.commit()
 
-    new_item = CartItem(cart_id=cart.id, product_id=product_id, quantity=1)
-    db.add(new_item)
-    await db.commit()
     return RedirectResponse("/cart", status_code=303)
 
-# ---------- Supprimer du panier ----------
+# ---------- Supprimer du panier (version robuste) ----------
 @router.get("/cart/remove/{product_id}")
 async def remove_from_cart(product_id: int, cart: Cart = Depends(get_cart), db: AsyncSession = Depends(get_db)):
-    stmt = select(CartItem).where(
-        CartItem.cart_id == cart.id,
-        CartItem.product_id == product_id
-    )
+    stmt = select(CartItem).where(CartItem.cart_id == cart.id, CartItem.product_id == product_id)
     result = await db.execute(stmt)
     item = result.scalars().first()
     if item:
@@ -68,16 +62,20 @@ async def remove_from_cart(product_id: int, cart: Cart = Depends(get_cart), db: 
         await db.commit()
     return RedirectResponse("/cart", status_code=303)
 
-# ---------- Voir le panier ----------
+# ---------- Voir le panier (avec selectinload) ----------
 @router.get("/cart")
 async def view_cart(request: Request, cart: Cart = Depends(get_cart), db: AsyncSession = Depends(get_db)):
-    # Charger les items avec les produits associés
+    # Charger les items AVEC les produits en une seule requête
     stmt = select(CartItem).where(CartItem.cart_id == cart.id).options(selectinload(CartItem.product))
     result = await db.execute(stmt)
     items = result.scalars().all()
 
-    total = sum(item.product.price * item.quantity for item in items if item.product)
-    cart_items = [{"product": item.product, "quantity": item.quantity} for item in items if item.product]
+    cart_items = []
+    total = 0
+    for item in items:
+        if item.product:
+            cart_items.append({"product": item.product, "quantity": item.quantity})
+            total += item.product.price * item.quantity
 
     return render_template("cart.html", {
         "request": request,
