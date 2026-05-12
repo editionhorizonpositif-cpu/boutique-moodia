@@ -14,7 +14,9 @@ async def send_download_email(
 ):
     try:
 
-        resend.Emails.send({
+        logger.info(f"Tentative envoi vers {to_email}")
+
+        response = resend.Emails.send({
             "from": "Moodia <support@moodia.xyz>",
             "to": [to_email],
             "subject": f"Votre ebook : {product_title}",
@@ -31,7 +33,7 @@ async def send_download_email(
             """
         })
 
-        logger.info(f"Email envoyé à {to_email}")
+        logger.info(f"RESEND RESPONSE: {response}")
 
     except Exception as e:
-        logger.error(f"Erreur Resend : {e}")
+        logger.exception(f"Erreur Resend : {e}")
