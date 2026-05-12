@@ -6,6 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from .database import get_db
+from .models import Category
 from .models import Product, Cart, CartItem, Order, OrderItem
 from .cart import get_cart
 from .paypal_client import create_paypal_order
@@ -24,9 +25,21 @@ def render_template(name: str, context: dict) -> HTMLResponse:
 # ---------- Page boutique ----------
 @router.get("/shop")
 async def shop(request: Request, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Product))
-    products = result.scalars().all()
-    return render_template("shop.html", {"request": request, "products": products})
+    # Récupérer toutes les catégories
+    cat_result = await db.execute(select(Category).order_by(Category.id))
+    categories = cat_result.scalars().all()
+    
+    # Récupérer tous les produits avec leur catégorie
+    prod_result = await db.execute(
+        select(Product).options(selectinload(Product.category))
+    )
+    products = prod_result.scalars().all()
+    
+    return render_template("shop.html", {
+        "request": request,
+        "categories": categories,
+        "products": products
+    })
 
 # ---------- Ajouter au panier (version robuste sans lazy loading) ----------
 @router.get("/cart/add/{product_id}")
