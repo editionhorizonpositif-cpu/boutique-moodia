@@ -15,7 +15,7 @@ async def send_download_email(
     try:
 
         resend.Emails.send({
-            "from": "Moodia <onboarding@resend.dev>",
+            "from": "Moodia <support@moodia.xyz>",
             "to": [to_email],
             "subject": f"Votre ebook : {product_title}",
             "html": f"""
