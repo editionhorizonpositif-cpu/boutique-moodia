@@ -1,4 +1,5 @@
 # app/email.py
+import socket
 import os
 import logging
 import aiosmtplib
@@ -11,6 +12,14 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 SMTP_FROM = os.getenv("SMTP_FROM", "")
+
+
+# TEST TEMPORAIRE
+try:
+    socket.create_connection((SMTP_HOST, SMTP_PORT), timeout=10)
+    logger.info("SMTP accessible")
+except Exception as e:
+    logger.error(f"SMTP bloqué : {e}")
 
 async def send_download_email(to_email: str, download_url: str, product_title: str):
     if not SMTP_USERNAME or not SMTP_PASSWORD:
