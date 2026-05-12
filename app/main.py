@@ -2,6 +2,7 @@
 import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from sqlalchemy import text
 from .database import engine, async_session
 from .models import Base
@@ -43,4 +44,4 @@ async def startup():
 
 @app.get("/")
 async def root():
-    return {"message": "Boutique Moodia"}
+    return RedirectResponse(url="/shop", status_code=302)
