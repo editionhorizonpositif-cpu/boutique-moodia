@@ -54,7 +54,7 @@ async def paypal_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             await db.commit()
 
             # --- Test : envoyer à une adresse fixe ---
-            test_email = "fouajionidelle2000@gmail.com"
+            test_email = "editionhorizonpositif@gmail.com"
             logger.info(f"Envoi de test à {test_email} (payer_email était {payer_email})")
 
             for item in order.items:
