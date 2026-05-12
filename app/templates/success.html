@@ -1,5 +1,38 @@
 {% extends "base.html" %}
+{% block title %}Paiement réussi – Moodia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-container {
+        text-align: center;
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 4rem 2rem;
+        box-shadow: var(--shadow);
+    }
+    .success-icon {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+    }
+    .success-container h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: var(--dark);
+    }
+    .success-container p {
+        color: var(--gray);
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2>Merci pour votre achat !</h2>
-<p>Vous recevrez bientôt un email avec le lien de téléchargement.</p>
+<div class="success-container">
+    <div class="success-icon">🎉</div>
+    <h1>Merci pour votre achat !</h1>
+    <p>Vous recevrez très bientôt un email avec votre lien de téléchargement.</p>
+    <a href="/shop" class="btn btn-primary">Continuer mes achats</a>
+</div>
 {% endblock %}
