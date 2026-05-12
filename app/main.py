@@ -9,6 +9,7 @@ from .downloads import router as downloads_router
 from .orders import router as orders_router
 from .webhooks import router as webhooks_router
 from .front import router as front_router          # <-- NOUVEAU
+from .health import router as health_router
 
 app = FastAPI(title="Boutique Moodia")
 
@@ -23,6 +24,7 @@ app.include_router(downloads_router)
 app.include_router(orders_router)
 app.include_router(webhooks_router)
 app.include_router(front_router)                  # <-- NOUVEAU
+app.include_router(health_router)
 
 async def keepalive():
     while True:
