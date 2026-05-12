@@ -5,6 +5,16 @@ from datetime import datetime
 
 Base = declarative_base()
 
+class Category(Base):
+    __tablename__ = "categories"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, unique=True)
+    slug = Column(String(100), nullable=False, unique=True)
+    description = Column(Text)
+    icon = Column(String(10), default="📚")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    products = relationship("Product", back_populates="category")
+
 class Product(Base):
     __tablename__ = "products"
     id = Column(Integer, primary_key=True)
@@ -17,6 +27,8 @@ class Product(Base):
     content_file_id = Column(String)
     content_name = Column(String)
     is_premium_only = Column(Boolean, default=False)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    category = relationship("Category", back_populates="products")
 
 class Cart(Base):
     __tablename__ = "carts"
