@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ product.title }} – Moodia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-detail {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 3rem;
+        box-shadow: var(--shadow);
+    }
+    .detail-image {
+        width: 100%;
+        border-radius: var(--radius-sm);
+        object-fit: cover;
+        background: linear-gradient(135deg, #A29BFE, #6C5CE7);
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 5rem;
+    }
+    .detail-info h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        letter-spacing: -0.5px;
+    }
+    .detail-price {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+    }
+    .detail-description {
+        color: var(--gray);
+        line-height: 1.8;
+        margin-bottom: 2rem;
+        font-size: 1.05rem;
+    }
+    .detail-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    @media (max-width: 768px) {
+        .product-detail {
+            grid-template-columns: 1fr;
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="/shop" style="color: var(--primary); text-decoration: none; margin-bottom:1rem; display:inline-block;">← Retour à la boutique</a>
+
+<div class="product-detail">
+    <div>
+        {% if product.image_url_main %}
+            <img src="{{ product.image_url_main }}" alt="{{ product.title }}" class="detail-image">
+        {% else %}
+            <div class="detail-image">📖</div>
+        {% endif %}
+    </div>
+    <div class="detail-info">
+        <h1>{{ product.title }}</h1>
+        <div class="detail-price">{{ "%.2f"|format(product.price) }} €</div>
+        {% if product.description %}
+            <div class="detail-description">{{ product.description }}</div>
+        {% endif %}
+        <div class="detail-actions">
+            <a href="/cart/add/{{ product.id }}" class="btn btn-primary">🛒 Ajouter au panier</a>
+            <a href="/buy/{{ product.id }}" class="btn btn-outline">⚡ Acheter maintenant</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
