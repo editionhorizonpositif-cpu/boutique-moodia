@@ -1,19 +1,74 @@
 {% extends "base.html" %}
+{% block title %}Panier – Moodia{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cart-container {
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 2.5rem;
+        box-shadow: var(--shadow);
+    }
+    .cart-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
+    .cart-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.2rem 0;
+        border-bottom: 1px solid #E8EAED;
+    }
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item-info { flex: 1; }
+    .cart-item-title { font-weight: 600; }
+    .cart-item-price { color: var(--gray); font-size: 0.9rem; }
+    .cart-total {
+        text-align: right;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid var(--dark);
+    }
+    .cart-empty {
+        text-align: center;
+        padding: 4rem;
+        color: var(--gray);
+    }
+    .cart-empty p { font-size: 1.2rem; margin-bottom: 1rem; }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2>Votre panier</h2>
-{% if cart_items %}
-    <ul>
-    {% for item in cart_items %}
-    <li class="cart-item">
-        {{ item.product.title }} x {{ item.quantity }} 
-        = {{ item.product.price * item.quantity }}€
-        <a href="/cart/remove/{{ item.product.id }}">Supprimer</a>
-    </li>
-    {% endfor %}
-    </ul>
-    <p>Total : {{ total }}€</p>
-    <a href="/checkout" class="btn">Commander avec PayPal</a>
-{% else %}
-    <p>Votre panier est vide.</p>
-{% endif %}
+<div class="cart-container">
+    <h1 class="cart-title">🛒 Votre Panier</h1>
+
+    {% if cart_items %}
+        {% for item in cart_items %}
+        <div class="cart-item">
+            <div class="cart-item-info">
+                <div class="cart-item-title">{{ item.product.title }}</div>
+                <div class="cart-item-price">{{ "%.2f"|format(item.product.price) }} € × {{ item.quantity }}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <strong>{{ "%.2f"|format(item.product.price * item.quantity) }} €</strong>
+                <a href="/cart/remove/{{ item.product.id }}" class="btn btn-danger btn-small">Supprimer</a>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="cart-total">Total : {{ "%.2f"|format(total) }} €</div>
+        <div style="text-align:right; margin-top:1.5rem;">
+            <a href="/checkout" class="btn btn-primary">💳 Commander avec PayPal</a>
+        </div>
+    {% else %}
+        <div class="cart-empty">
+            <p>🛍️ Votre panier est vide.</p>
+            <a href="/shop" class="btn btn-primary">Découvrir nos produits</a>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
