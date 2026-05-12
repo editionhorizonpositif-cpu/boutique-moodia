@@ -62,7 +62,7 @@ async def paypal_webhook(request: Request, db: AsyncSession = Depends(get_db)):
                 logger.info(f"Produit: {product.title if product else 'None'}, content_file_id: {product.content_file_id if product else 'None'}")
                 if product and product.content_file_id:
                     token = generate_download_token(product.id)
-                    download_url = f"https://api-boutique.moodia.xyz/download/ebook?token={token}"
+                    download_url = f"https://boutique.moodia.xyz/download/ebook?token={token}"
                     logger.info(f"Envoi email à {test_email} pour {product.title}")
                     await send_download_email(
                         to_email=test_email,
