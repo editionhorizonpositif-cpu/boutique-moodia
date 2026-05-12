@@ -160,7 +160,9 @@ async def payment_success(request: Request):
 # ---------- Page détail produit ----------
 @router.get("/product/{product_id}")
 async def product_detail(product_id: int, request: Request, db: AsyncSession = Depends(get_db)):
-    product = await db.get(Product, product_id)
+    stmt = select(Product).where(Product.id == product_id).options(selectinload(Product.category))
+    result = await db.execute(stmt)
+    product = result.scalars().first()
     if not product:
         raise HTTPException(404, "Produit introuvable")
     return render_template("detail.html", {"request": request, "product": product})
