@@ -1,12 +1,14 @@
-import asyncio
+import os
 import io
+import json
+import base64
+import asyncio
 import logging
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
-from .config import GOOGLE_DRIVE_CREDENTIALS
 
 logger = logging.getLogger(__name__)
 
@@ -17,18 +19,35 @@ SCOPES = [
 
 def get_drive_service():
 
-    if not GOOGLE_DRIVE_CREDENTIALS:
+    encoded_credentials = os.getenv(
+        "GOOGLE_DRIVE_CREDENTIALS_BASE64"
+    )
+
+    if not encoded_credentials:
         raise Exception(
-            "GOOGLE_DRIVE_CREDENTIALS non configuré sur le serveur"
+            "GOOGLE_DRIVE_CREDENTIALS_BASE64 introuvable"
         )
 
     logger.info(
-        f"Google credentials path = {GOOGLE_DRIVE_CREDENTIALS}"
+        "Credentials Google Drive détectés"
     )
 
-    credentials = service_account.Credentials.from_service_account_file(
-        GOOGLE_DRIVE_CREDENTIALS,
-        scopes=SCOPES
+    credentials_json = base64.b64decode(
+        encoded_credentials
+    ).decode(
+        "utf-8"
+    )
+
+    credentials_dict = json.loads(
+        credentials_json
+    )
+
+    credentials = (
+        service_account.Credentials
+        .from_service_account_info(
+            credentials_dict,
+            scopes=SCOPES
+        )
     )
 
     return build(
@@ -38,9 +57,13 @@ def get_drive_service():
     )
 
 
-def _download_file_sync(file_id: str) -> io.BytesIO:
+def _download_file_sync(
+    file_id: str
+):
 
-    logger.info(f"Téléchargement Google Drive : {file_id}")
+    logger.info(
+        f"Téléchargement Google Drive: {file_id}"
+    )
 
     service = get_drive_service()
 
@@ -58,21 +81,31 @@ def _download_file_sync(file_id: str) -> io.BytesIO:
     done = False
 
     while not done:
-        status, done = downloader.next_chunk()
+
+        status, done = (
+            downloader.next_chunk()
+        )
 
         if status:
+
             logger.info(
-                f"Progression: {int(status.progress() * 100)}%"
+                f"Progression: "
+                f"{int(status.progress()*100)}%"
             )
 
     file_buffer.seek(0)
 
-    logger.info("Téléchargement terminé")
+    logger.info(
+        "Téléchargement terminé"
+    )
 
     return file_buffer
 
 
-async def download_file(file_id: str) -> io.BytesIO:
+async def download_file(
+    file_id: str
+):
+
     return await asyncio.to_thread(
         _download_file_sync,
         file_id
