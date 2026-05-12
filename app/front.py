@@ -142,4 +142,12 @@ async def view_cart_json(cart: Cart = Depends(get_cart), db: AsyncSession = Depe
 # ---------- Page de succès ----------
 @router.get("/payment-success")
 async def payment_success(request: Request):
-    return render_template("success.html", {"request": request})
+    return render_template("success.html", {"request": request}) 
+
+# ---------- Page détail produit ----------
+@router.get("/product/{product_id}")
+async def product_detail(product_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    product = await db.get(Product, product_id)
+    if not product:
+        raise HTTPException(404, "Produit introuvable")
+    return render_template("detail.html", {"request": request, "product": product})
