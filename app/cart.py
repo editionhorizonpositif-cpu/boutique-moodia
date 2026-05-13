@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from .database import get_db
-from .models import Cart, CartItem
+from .models import Cart
 import uuid
 
 COOKIE_NAME = "cart_session"
@@ -12,24 +12,29 @@ COOKIE_NAME = "cart_session"
 async def get_cart(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
     session_id = request.cookies.get(COOKIE_NAME)
     cart = None
+    
     if session_id:
         result = await db.execute(
             select(Cart).where(Cart.session_id == session_id).options(selectinload(Cart.items))
         )
         cart = result.scalars().first()
+    
     if not cart:
         session_id = str(uuid.uuid4())
         cart = Cart(session_id=session_id)
         db.add(cart)
         await db.commit()
         await db.refresh(cart)
-        response.set_cookie(
-            COOKIE_NAME,
-            session_id,
-            httponly=True,
-            secure=True,
-            samesite="lax",
-            path="/",            # <-- indispensable pour que le cookie soit disponible partout
-            max_age=3600*24*30
-        )
+    
+    # Toujours renvoyer le cookie (même s'il existe déjà) pour renouveler l'expiration
+    response.set_cookie(
+        COOKIE_NAME,
+        session_id,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        path="/",
+        max_age=3600*24*30  # 30 jours
+    )
+    
     return cart
