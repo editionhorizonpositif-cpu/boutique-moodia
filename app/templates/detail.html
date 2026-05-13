@@ -157,7 +157,7 @@
                 {% for img in images %}
                     <img src="{{ img }}" 
                          class="gallery-thumb {% if loop.first %}active{% endif %}" 
-                         onclick="changeImage('{{ img }}', this)" 
+                         onclick="changeImage({{ loop.index0 }}, this)" 
                          alt="Image {{ loop.index }}">
                 {% endfor %}
             {% endif %}
@@ -191,18 +191,25 @@
 </div>
 
 <script>
-    function changeImage(src, thumb) {
-        // Changer l'image principale
-        let mainDiv = document.getElementById('mainImage');
-        if (mainDiv.querySelector('img')) {
-            mainDiv.querySelector('img').src = src;
-        } else {
-            mainDiv.innerHTML = '<img src="' + src + '" alt="{{ product.title }}">';
+    // Stocker toutes les URLs des images dans un tableau
+    const imageUrls = [];
+    {% if product.image_url_main %}imageUrls.push("{{ product.image_url_main }}");{% endif %}
+    {% if product.image_url_2 %}imageUrls.push("{{ product.image_url_2 }}");{% endif %}
+    {% if product.image_url_3 %}imageUrls.push("{{ product.image_url_3 }}");{% endif %}
+
+    function changeImage(index, thumb) {
+        if (index >= 0 && index < imageUrls.length) {
+            let mainDiv = document.getElementById('mainImage');
+            if (mainDiv.querySelector('img')) {
+                mainDiv.querySelector('img').src = imageUrls[index];
+            } else {
+                mainDiv.innerHTML = '<img src="' + imageUrls[index] + '" alt="{{ product.title }}">';
+            }
+            
+            // Activer la miniature
+            document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
         }
-        
-        // Activer la miniature
-        document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
-        thumb.classList.add('active');
     }
 </script>
 {% endblock %}
