@@ -41,7 +41,7 @@ async def shop(request: Request, db: AsyncSession = Depends(get_db)):
         "products": products
     })
 
-# ---------- Ajouter au panier (version robuste sans lazy loading) ----------
+# ---------- Ajouter au panier (version corrigée) ----------
 @router.get("/cart/add/{product_id}")
 async def add_to_cart(product_id: int, cart: Cart = Depends(get_cart), db: AsyncSession = Depends(get_db)):
     # Vérifier que le produit existe
@@ -56,13 +56,13 @@ async def add_to_cart(product_id: int, cart: Cart = Depends(get_cart), db: Async
 
     if existing:
         existing.quantity += 1
-        await db.commit()
     else:
         new_item = CartItem(cart_id=cart.id, product_id=product_id, quantity=1)
         db.add(new_item)
-        await db.commit()
+    
+    await db.commit()
 
-    return RedirectResponse("/cart", status_code=303)
+    return RedirectResponse(f"/cart", status_code=303)
 
 # ---------- Supprimer du panier (version robuste) ----------
 @router.get("/cart/remove/{product_id}")
